@@ -9,7 +9,7 @@ class ReactivityEffect {
     run() {
         // 当执行 fn 函数时，将 this 暴露到全局
         activityEffect = this
-        this._fn()
+        return this._fn()
     }
 }
 
@@ -19,6 +19,8 @@ export function effect(fn) {
 
     // 执行 fn 函数
     _effect.run()
+
+    return _effect.run.bind(_effect)
 }
 
 // 收集依赖
