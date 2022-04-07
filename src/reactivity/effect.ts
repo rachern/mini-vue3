@@ -1,7 +1,7 @@
 // ReactivityEffect 类，用于收集 fn 函数和执行 fn 函数
 class ReactivityEffect {
     private _fn: any
-    scheduler: any
+    public scheduler: Function | undefined
 
     constructor(fn, scheduler?) {
         this._fn = fn
