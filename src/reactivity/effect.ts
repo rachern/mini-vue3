@@ -1,8 +1,11 @@
+import { extend } from "../shared"
+
 // ReactivityEffect 类，用于收集 fn 函数和执行 fn 函数
 class ReactivityEffect {
     private _fn: any
     deps = []
     active = true
+    onStop?: () => void
     public scheduler: Function | undefined
 
     constructor(fn, scheduler?) {
@@ -17,13 +20,17 @@ class ReactivityEffect {
     }
 
     stop() {
+        // 防止多次执行 stop
         if (this.active) {
             cleanupEffect(this)
+            // 如果有 onStop 回调，需要执行 onStop
+            this.onStop && this.onStop()
             this.active = false
         }
     }
 }
 
+// 用于执行 stop 时清除 effect
 function cleanupEffect(effect) {
     effect.deps.forEach((dep: any) => {
         dep.delete(effect)
@@ -33,6 +40,8 @@ function cleanupEffect(effect) {
 let activityEffect
 export function effect(fn, options: any = {}) {
     const _effect = new ReactivityEffect(fn, options.scheduler)
+    // => Object.assign(_effect, options)
+    extend(_effect, options)
 
     // 执行 fn 函数
     _effect.run()
@@ -64,8 +73,11 @@ export function track(target, key) {
         depsMap.set(key, dep)
     }
 
+    if (!activityEffect) return
+
     // 将当前触发的实例对象收集起来
     dep.add(activityEffect)
+    // 反向收集依赖，用于在 stop 时清除当前 effect
     activityEffect.deps.push(dep)
 }
 
