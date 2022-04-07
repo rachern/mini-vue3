@@ -1,9 +1,11 @@
 // ReactivityEffect 类，用于收集 fn 函数和执行 fn 函数
 class ReactivityEffect {
     private _fn: any
+    scheduler: any
 
-    constructor(fn) {
+    constructor(fn, scheduler?) {
         this._fn = fn
+        this.scheduler = scheduler
     }
     
     run() {
@@ -14,8 +16,8 @@ class ReactivityEffect {
 }
 
 let activityEffect
-export function effect(fn) {
-    const _effect = new ReactivityEffect(fn)
+export function effect(fn, options: any = {}) {
+    const _effect = new ReactivityEffect(fn, options.scheduler)
 
     // 执行 fn 函数
     _effect.run()
@@ -56,6 +58,6 @@ export function trigger(target, key) {
     const dep = depsMap.get(key)
 
     dep.forEach(effect => {
-        effect.run()
+        effect.scheduler ? effect.scheduler() : effect.run()
     });
 }
