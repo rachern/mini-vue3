@@ -1,6 +1,8 @@
 // ReactivityEffect 类，用于收集 fn 函数和执行 fn 函数
 class ReactivityEffect {
     private _fn: any
+    deps = []
+    active = true
     public scheduler: Function | undefined
 
     constructor(fn, scheduler?) {
@@ -13,6 +15,19 @@ class ReactivityEffect {
         activityEffect = this
         return this._fn()
     }
+
+    stop() {
+        if (this.active) {
+            cleanupEffect(this)
+            this.active = false
+        }
+    }
+}
+
+function cleanupEffect(effect) {
+    effect.deps.forEach((dep: any) => {
+        dep.delete(effect)
+    })
 }
 
 let activityEffect
@@ -22,7 +37,10 @@ export function effect(fn, options: any = {}) {
     // 执行 fn 函数
     _effect.run()
 
-    return _effect.run.bind(_effect)
+    const runner: any = _effect.run.bind(_effect)
+    runner.effect = _effect
+
+    return runner
 }
 
 // 收集依赖
@@ -48,6 +66,7 @@ export function track(target, key) {
 
     // 将当前触发的实例对象收集起来
     dep.add(activityEffect)
+    activityEffect.deps.push(dep)
 }
 
 // 触发依赖
@@ -60,4 +79,9 @@ export function trigger(target, key) {
     dep.forEach(effect => {
         effect.scheduler ? effect.scheduler() : effect.run()
     });
+}
+
+// 停止 effect 响应
+export function stop(runner) {
+    runner.effect.stop()
 }

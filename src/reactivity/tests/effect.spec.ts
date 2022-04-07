@@ -1,5 +1,5 @@
 import { reactivity } from '../reactivity'
-import { effect } from '../effect'
+import { effect, stop } from '../effect'
 
 describe('effect', () => {
     it('happy path', () => {
@@ -60,5 +60,23 @@ describe('effect', () => {
         // should have run
         expect(dummy).toBe(2)
 
+    })
+
+    it('stop', () => {
+        let dummy
+        const obj = reactivity({ foo: 1 })
+        const runner = effect(() => {
+            dummy = obj.foo
+        })
+        // 执行 get 操作时，调用 effect
+        obj.foo = 2
+        expect(dummy).toBe(2)
+        // 执行 stop 之后，再次执行 get 操作时，不再调用 effect
+        stop(runner)
+        obj.foo = 3
+        expect(dummy).toBe(2)
+        // 调用 runner，执行 effect
+        runner()
+        expect(dummy).toBe(3)
     })
 })
