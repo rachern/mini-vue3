@@ -1,9 +1,9 @@
-import { reactivity } from '../reactivity'
+import { reactive } from '../reactive'
 import { effect, stop } from '../effect'
 
 describe('effect', () => {
     it('happy path', () => {
-        const user = reactivity({
+        const user = reactive({
             age: 18
         })
 
@@ -44,7 +44,7 @@ describe('effect', () => {
         const scheduler = jest.fn(() => {
             run = runner
         })
-        const obj = reactivity({ foo: 1 })
+        const obj = reactive({ foo: 1 })
         const runner = effect(() => {
             dummy = obj.foo
         }, { scheduler })
@@ -64,7 +64,7 @@ describe('effect', () => {
 
     it('stop', () => {
         let dummy
-        const obj = reactivity({ foo: 1 })
+        const obj = reactive({ foo: 1 })
         const runner = effect(() => {
             dummy = obj.foo
         })
@@ -81,7 +81,7 @@ describe('effect', () => {
     })
 
     it('onStop', () => {
-        const obj = reactivity({ foo: 1 })
+        const obj = reactive({ foo: 1 })
         const onStop = jest.fn()
         let dummy
         const runner = effect(() => {

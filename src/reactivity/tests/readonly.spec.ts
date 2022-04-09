@@ -1,4 +1,4 @@
-import { isReadonly, readonly } from '../reactivity'
+import { isReadonly, readonly } from '../reactive'
 
 describe('readonly', () => {
     // 1. readonly 会创建一个代理对象

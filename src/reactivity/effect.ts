@@ -1,7 +1,7 @@
 import { extend } from "../shared"
 
 // ReactivityEffect 类，用于收集 fn 函数和执行 fn 函数
-class ReactivityEffect {
+class ReactiveEffect {
     private _fn: any
     deps = []
     active = true
@@ -39,7 +39,7 @@ function cleanupEffect(effect) {
 
 let activityEffect
 export function effect(fn, options: any = {}) {
-    const _effect = new ReactivityEffect(fn, options.scheduler)
+    const _effect = new ReactiveEffect(fn, options.scheduler)
     // => Object.assign(_effect, options)
     extend(_effect, options)
 

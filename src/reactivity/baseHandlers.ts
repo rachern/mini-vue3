@@ -1,20 +1,20 @@
 import { track, trigger } from './effect'
-import { ReactivityFlags } from './reactivity'
+import { ReactiveFlags } from './reactive'
 
 // 利用缓存，避免每次调用都需要创建新的函数
 const get = createGetter()
 const set = createSetter()
 const readonlyGet = createGetter(true)
 
-// reactivity 和 readonly 的 getter 差别在于：
-// reactivity 需要收集依赖，而 readonly 不需要
+// reactive 和 readonly 的 getter 差别在于：
+// reactive 需要收集依赖，而 readonly 不需要
 function createGetter(isReadonly = false) {
     return function (target, key) {
-        // 因为 reactivity 和 readonly 的 getter 函数通过 isReadonly 区分
-        // 所以同样利用 isReadonly 区分 isReactivity 和 isReadonly
-        if (key === ReactivityFlags.IS_REACTIVITY) {
+        // 因为 reactive 和 readonly 的 getter 函数通过 isReadonly 区分
+        // 所以同样利用 isReadonly 区分 isReactive 和 isReadonly
+        if (key === ReactiveFlags.IS_REACTIVE) {
             return !isReadonly
-        } else if (key === ReactivityFlags.IS_READONLY) {
+        } else if (key === ReactiveFlags.IS_READONLY) {
             return isReadonly
         }
 
@@ -27,7 +27,7 @@ function createGetter(isReadonly = false) {
     }
 }
 
-// reactivity 可以设置属性值，而 readonly 不可以
+// reactive 可以设置属性值，而 readonly 不可以
 function createSetter() {
     return function (target, key, value) {
         const res = Reflect.set(target, key, value)
