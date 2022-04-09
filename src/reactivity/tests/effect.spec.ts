@@ -75,9 +75,13 @@ describe('effect', () => {
         stop(runner)
         obj.foo = 3
         expect(dummy).toBe(2)
+        // obj.foo => obj.foo = obj.foo + 1
+        // 同时触发 get 和 set 操作
+        obj.foo++
+        expect(dummy).toBe(2)
         // 调用 runner，执行 effect
         runner()
-        expect(dummy).toBe(3)
+        expect(dummy).toBe(4)
     })
 
     it('onStop', () => {
