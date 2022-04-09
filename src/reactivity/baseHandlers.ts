@@ -1,4 +1,5 @@
 import { track, trigger } from './effect'
+import { ReactivityFlags } from './reactivity'
 
 // 利用缓存，避免每次调用都需要创建新的函数
 const get = createGetter()
@@ -9,6 +10,14 @@ const readonlyGet = createGetter(true)
 // reactivity 需要收集依赖，而 readonly 不需要
 function createGetter(isReadonly = false) {
     return function (target, key) {
+        // 因为 reactivity 和 readonly 的 getter 函数通过 isReadonly 区分
+        // 所以同样利用 isReadonly 区分 isReactivity 和 isReadonly
+        if (key === ReactivityFlags.IS_REACTIVITY) {
+            return !isReadonly
+        } else if (key === ReactivityFlags.IS_READONLY) {
+            return isReadonly
+        }
+
         const res = Reflect.get(target, key)
         // 收集依赖
         if (!isReadonly) {

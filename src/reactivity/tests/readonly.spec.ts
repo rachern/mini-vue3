@@ -1,4 +1,4 @@
-import { readonly } from '../reactivity'
+import { isReadonly, readonly } from '../reactivity'
 
 describe('readonly', () => {
     // 1. readonly 会创建一个代理对象
@@ -7,6 +7,8 @@ describe('readonly', () => {
         const wrapped = readonly(original)
         expect(wrapped).not.toBe(original)
         expect(wrapped.foo).toBe(1)
+        expect(isReadonly(wrapped)).toBe(true)
+        expect(isReadonly(original)).toBe(false)
     })
 
     // 2. 代理对象的属性无法设置，进行设置时会报错
