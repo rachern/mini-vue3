@@ -1,3 +1,4 @@
+import { extend } from './../shared/index';
 import { isObject } from '../shared'
 import { track, trigger } from './effect'
 import { reactive, ReactiveFlags, readonly } from './reactive'
@@ -6,10 +7,11 @@ import { reactive, ReactiveFlags, readonly } from './reactive'
 const get = createGetter()
 const set = createSetter()
 const readonlyGet = createGetter(true)
+const shallowReadonlyGet = createGetter(true, true)
 
 // reactive 和 readonly 的 getter 差别在于：
 // reactive 需要收集依赖，而 readonly 不需要
-function createGetter(isReadonly = false) {
+function createGetter(isReadonly = false, shallow = false) {
     return function (target, key) {
         // 因为 reactive 和 readonly 的 getter 函数通过 isReadonly 区分
         // 所以同样利用 isReadonly 区分 isReactive 和 isReadonly
@@ -20,6 +22,11 @@ function createGetter(isReadonly = false) {
         }
 
         const res = Reflect.get(target, key)
+
+        // 如果是 shallowReadonly 不需要嵌套，也不需要收集依赖
+        if (shallow) {
+            return res
+        }
 
         if (isObject(res)) {
             return isReadonly ? readonly(res) : reactive(res)
@@ -56,3 +63,8 @@ export const readonlyHandlers = {
         return true
     }
 }
+
+// shallowReadonly 和 readonly 的 setter 操作一致
+export const shallowReadonlyHandlers = extend({}, readonlyHandlers, {
+    get: shallowReadonlyGet
+})
