@@ -96,6 +96,10 @@ export function track(target, key) {
         depsMap.set(key, dep)
     }
 
+    trackEffects(dep)
+}
+
+export function trackEffects(dep) {
     // 如果当前依赖已经收集过了，不需要重复收集
     if (dep.has(activeEffect)) return
     // 将当前触发的实例对象收集起来
@@ -105,7 +109,7 @@ export function track(target, key) {
 }
 
 // 判断是否是 stop 状态
-function isTracking() {
+export function isTracking() {
     return shouldTrack && activeEffect !== undefined
 }
 
@@ -116,6 +120,10 @@ export function trigger(target, key) {
 
     const dep = depsMap.get(key)
 
+    triggerEffects(dep)
+}
+
+export function triggerEffects(dep) {
     dep.forEach(effect => {
         effect.scheduler ? effect.scheduler() : effect.run()
     });
