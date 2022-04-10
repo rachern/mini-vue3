@@ -6,6 +6,7 @@ class RefImpl {
     private _value: any;
     public dep: Set<unknown>;
     private _rawValue: any;
+    public __v_isRef = true
     constructor(value) {
         // 初始值（如果是对象，则保存的是转化为 proxy 之前的值），用于判断新值是否改变
         this._rawValue = value
@@ -45,4 +46,8 @@ export function ref(value) {
     // 返回一个 RefImpl 类，这样在获取 .value 的时候会触发 getter 函数
     // 在为 .value 赋值的时候，会触发 setter 函数
     return new RefImpl(value)
+}
+
+export function isRef(value) {
+    return !!value.__v_isRef
 }

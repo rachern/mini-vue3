@@ -1,5 +1,6 @@
 import { effect } from "../effect"
-import { ref } from "../ref"
+import { reactive } from "../reactive"
+import { isRef, ref } from "../ref"
 
 describe('ref', () => {
     // 1. 使用 ref 之后会将值转换为 对象，通过 .value 获取原来的值
@@ -55,5 +56,15 @@ describe('ref', () => {
         a.value = obj
         expect(calls).toBe(3)
         expect(dummy).toBe(3)
+    })
+
+    it('isRef', () => {
+        const a = ref(1)
+        const user = reactive({
+            age: 11
+        })
+        expect(isRef(a)).toBe(true)
+        expect(isRef(1)).toBe(false)
+        expect(isRef(user)).toBe(false)
     })
 })
