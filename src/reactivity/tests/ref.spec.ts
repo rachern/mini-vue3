@@ -1,6 +1,6 @@
 import { effect } from "../effect"
 import { reactive } from "../reactive"
-import { isRef, ref, toRef } from "../ref"
+import { isRef, ref, unRef } from "../ref"
 
 describe('ref', () => {
     // 1. 使用 ref 之后会将值转换为 对象，通过 .value 获取原来的值
@@ -70,7 +70,7 @@ describe('ref', () => {
 
     it('toRef', () => {
         const a = ref(1)
-        expect(toRef(a)).toBe(1)
-        expect(toRef(1)).toBe(1)
+        expect(unRef(a)).toBe(1)
+        expect(unRef(1)).toBe(1)
     })
 })
