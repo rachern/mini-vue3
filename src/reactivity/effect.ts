@@ -4,7 +4,7 @@ let activeEffect
 let shouldTrack
 
 // ReactivityEffect 类，用于收集 fn 函数和执行 fn 函数
-class ReactiveEffect {
+export class ReactiveEffect {
     private _fn: any
     deps = []
     active = true
