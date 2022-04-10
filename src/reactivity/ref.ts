@@ -51,3 +51,8 @@ export function ref(value) {
 export function isRef(value) {
     return !!value.__v_isRef
 }
+
+export function toRef(value) {
+    // 如果是 ref，需要返回 .value
+    return value.__v_isRef ? value.value : value
+}
