@@ -1,6 +1,6 @@
 import { effect } from "../effect"
 import { reactive } from "../reactive"
-import { isRef, ref, unRef } from "../ref"
+import { isRef, proxyRefs, ref, unRef } from "../ref"
 
 describe('ref', () => {
     // 1. 使用 ref 之后会将值转换为 对象，通过 .value 获取原来的值
@@ -72,5 +72,26 @@ describe('ref', () => {
         const a = ref(1)
         expect(unRef(a)).toBe(1)
         expect(unRef(1)).toBe(1)
+    })
+
+    it('proxyRefs', () => {
+        const user = {
+            age: ref(10),
+            name: 'xiaoming'
+        }
+
+        // 代理对象的属性值如果是 ref，自动解构
+        const proxyUser = proxyRefs(user)
+        expect(user.age.value).toBe(10)
+        expect(proxyUser.age).toBe(10)
+        expect(proxyUser.name).toBe('xiaoming')
+
+        proxyUser.age = 20
+        expect(proxyUser.age).toBe(20)
+        expect(user.age.value).toBe(20)
+
+        proxyUser.age = ref(30)
+        expect(proxyUser.age).toBe(30)
+        expect(user.age.value).toBe(30)
     })
 })
