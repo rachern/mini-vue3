@@ -7,7 +7,11 @@ export function render(vnode, container) {
 function patch(vnode: any, container: any) {
     // 处理组件
 
+    // TODO
     // 判断 是不是 element
+    // processElement()
+
+    // 判断 是不是 component
     processComponent(vnode, container)
 }
 

@@ -4,6 +4,9 @@ import { createVNode } from "./vnode"
 export function createApp(rootComponent) {
     return {
         mount(rootContainer) {
+            if (typeof rootContainer === 'string') {
+                rootContainer = document.querySelector(rootContainer)
+            }
             // 组件 -> vnode
             const vnode = createVNode(rootComponent)
 
