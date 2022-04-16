@@ -1,5 +1,6 @@
 import { isObject } from "../shared/index"
 import { createComponentInstance, setupComponent } from "./component"
+import { createVNode } from "./vnode"
 
 export function render(vnode, container) {
     patch(vnode, container)
@@ -27,7 +28,7 @@ function processElement(vnode: any, container: any) {
 
 // 挂载 element
 function mountElement(vnode: any, container: any) {
-    const el = document.createElement(vnode.type)
+    const el = vnode.el = document.createElement(vnode.type)
 
     const { props, children } = vnode
     // children (string array)
@@ -61,14 +62,20 @@ function mountComponent(vnode: any, container: any) {
 
     setupComponent(instance)
 
-    setupRenderEffect(instance, container)
+    setupRenderEffect(instance, vnode, container)
 }
 
-function setupRenderEffect(instance: any, container: any) {
-    const subTree = instance.render()
+function setupRenderEffect(instance: any, vnode: any, container: any) {
+    const { proxy } = instance
+    // 使得在 render 函数中调用 this 能够获取到 setup 返回的值
+    // 并且能够使用 this.$el 等属性
+    const subTree = instance.render.call(proxy)
 
     // vnode -> patch
     // vnode -> element -> mountElement
     patch(subTree, container)
+
+    // 整棵 vnode 树挂载完成之后，将 根元素 挂载到 el 上，可以通过 $el 获取到 根元素
+    vnode.el = subTree.el
 }
 
