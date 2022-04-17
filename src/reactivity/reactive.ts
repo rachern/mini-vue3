@@ -7,15 +7,15 @@ export const enum ReactiveFlags {
 }
 
 export function reactive(raw) {
-    return createActiveObject(raw, mutableHandlers)
+    return createReactiveObject(raw, mutableHandlers)
 }
 
 export function readonly(raw) {
-    return createActiveObject(raw, readonlyHandlers)
+    return createReactiveObject(raw, readonlyHandlers)
 }
 
 export function shallowReadonly(raw) {
-    return createActiveObject(raw, shallowReadonlyHandlers)
+    return createReactiveObject(raw, shallowReadonlyHandlers)
 }
 
 export function isReactive(value) {
@@ -32,9 +32,9 @@ export function isProxy(value) {
     return isReactive(value) || isReadonly(value)
 }
 
-function createActiveObject(raw, baseHandlers) {
-    if (!isObject(raw)) {
-        console.warn(`target ${raw} 必须是一个对象`)
+function createReactiveObject(target, baseHandlers) {
+    if (!isObject(target)) {
+        console.warn(`target ${target} 必须是一个对象`)
     }
-    return new Proxy(raw, baseHandlers)
+    return new Proxy(target, baseHandlers)
 }
