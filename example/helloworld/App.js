@@ -1,4 +1,5 @@
 import { h } from '../../lib/guide-mini-vue3.esm.js'
+import { Foo } from './Foo.js'
 
 window.self = null
 export const App = {
@@ -16,8 +17,12 @@ export const App = {
                     console.log('enter')
                 }
             }, 
+            [
+                h('div', {}, `hi, ${this.msg}`),
+                h(Foo, { count: 1 })
+            ]
             // string
-            'hello, ' + this.msg
+            // 'hello, ' + this.msg
             // array
             // [
             //     h('p', { class: 'red' }, 'red-text'),
