@@ -8,7 +8,13 @@ export const App = {
             'div', 
             { 
                 id: 'test-div',
-                class: 'red'
+                class: 'red',
+                onClick() {
+                    console.log('click')
+                },
+                onMouseenter() {
+                    console.log('enter')
+                }
             }, 
             // string
             'hello, ' + this.msg

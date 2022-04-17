@@ -40,7 +40,15 @@ function mountElement(vnode: any, container: any) {
 
     // props
     for (const key in props) {
-        el.setAttribute(key, props[key])
+        const isOn = (key: string) => /^on[A-Z]/.test(key)
+        if (isOn(key)) {
+            // 注册事件
+            // 规则： on + Event
+            const event = key.slice(2).toLowerCase()
+            el.addEventListener(event, props[key])
+        } else {
+            el.setAttribute(key, props[key])
+        }
     }
 
     container.append(el)
