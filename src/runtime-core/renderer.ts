@@ -1,4 +1,4 @@
-import { Fragment } from './vnode';
+import { Fragment, Text } from './vnode';
 import { ShapeFlags } from "../shared/ShapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 
@@ -14,6 +14,9 @@ function patch(vnode: any, container: any) {
         case Fragment:
             processFragment(vnode, container)
             break
+        case Text:
+            processText(vnode, container)
+            break
         default:
             if (shapeFlag & ShapeFlags.ELEMENT) {
                 // 判断 是不是 element
@@ -24,6 +27,14 @@ function patch(vnode: any, container: any) {
             }
             break
     }
+}
+
+// 处理文本
+// 当 type 为 Text 时，创建 textnode 挂载到当前容器上
+function processText(vnode: any, container: any) {
+    const { children } = vnode
+    const textNode = vnode.el = document.createTextNode(children)
+    container.append(textNode)
 }
 
 // 处理 Fragment （插槽）
