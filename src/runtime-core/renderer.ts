@@ -1,3 +1,4 @@
+import { Fragment } from './vnode';
 import { ShapeFlags } from "../shared/ShapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 
@@ -7,14 +8,28 @@ export function render(vnode, container) {
 
 function patch(vnode: any, container: any) {
     // 处理组件
+    const { type, shapeFlag } = vnode
 
-    if (vnode.shapeFlag & ShapeFlags.ELEMENT) {
-        // 判断 是不是 element
-        processElement(vnode, container)
-    } else if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        // 判断 是不是 component
-        processComponent(vnode, container)
+    switch(type) {
+        case Fragment:
+            processFragment(vnode, container)
+            break
+        default:
+            if (shapeFlag & ShapeFlags.ELEMENT) {
+                // 判断 是不是 element
+                processElement(vnode, container)
+            } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+                // 判断 是不是 component
+                processComponent(vnode, container)
+            }
+            break
     }
+}
+
+// 处理 Fragment （插槽）
+// 当 type 为 Fragment 时，只渲染 children
+function processFragment(vnode: any, container: any) {
+    mountChildren(vnode.children, container)
 }
 
 // 处理标签元素 element
