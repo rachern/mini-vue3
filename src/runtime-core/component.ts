@@ -42,9 +42,11 @@ function setupStatefulComponent(instance: any) {
     if (setup) {
         // 调用 setup 的时候将 props 传进去
         // 并且 props 是 shallowReadonly 属性
+        setCurrentInstance(instance)
         const setupResult = setup(shallowReadonly(instance.props), {
             emit: instance.emit
         })
+        setCurrentInstance(null)
 
         handleSetupResult(instance, setupResult)
     }
@@ -68,3 +70,13 @@ function finishComponentSetup(instance: any) {
     }
 }
 
+let currentInstance = null
+
+// 返回当前实例对象
+export function getCurrentInstance() {
+    return currentInstance
+}
+
+function setCurrentInstance(instance) {
+    currentInstance = instance
+}
