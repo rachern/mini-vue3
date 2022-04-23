@@ -12,8 +12,7 @@ export function createAppAPI(render) {
                 const vnode = createVNode(rootComponent)
 
                 // 渲染虚拟节点
-                // 根组件没有parent，因此为 null
-                render(vnode, rootContainer, null)
+                render(vnode, rootContainer)
             }
         }
     }

@@ -10,8 +10,9 @@ import { createAppAPI } from './createApp';
 export function createRenderer(options) {
     const { createElement, patchProp, insert } = options
 
-    function render(vnode, container, parent) {
-        patch(vnode, container, parent)
+    // 根组件没有parent，因此为 null
+    function render(vnode, container) {
+        patch(vnode, container, null)
     }
 
     function patch(vnode: any, container: any, parent: any) {
