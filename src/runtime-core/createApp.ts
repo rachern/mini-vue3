@@ -11,7 +11,8 @@ export function createApp(rootComponent) {
             const vnode = createVNode(rootComponent)
 
             // 渲染虚拟节点
-            render(vnode, rootContainer)
+            // 根组件没有parent，因此为 null
+            render(vnode, rootContainer, null)
         }
     }
 }
