@@ -2,6 +2,7 @@ import { Fragment, Text } from './vnode';
 import { ShapeFlags } from "../shared/ShapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
 import { createAppAPI } from './createApp';
+import { effect } from '../reactivity/effect';
 
 // 自定义渲染器
 // createElement  创建元素
@@ -12,27 +13,29 @@ export function createRenderer(options) {
 
     // 根组件没有parent，因此为 null
     function render(vnode, container) {
-        patch(vnode, container, null)
+        patch(null, vnode, container, null)
     }
 
-    function patch(vnode: any, container: any, parent: any) {
+    // n1: oldVNode
+    // n2: newVNode
+    function patch(n1: any, n2: any, container: any, parent: any) {
         // 处理组件
-        const { type, shapeFlag } = vnode
+        const { type, shapeFlag } = n2
 
         switch(type) {
             case Fragment:
-                processFragment(vnode, container, parent)
+                processFragment(n1, n2, container, parent)
                 break
             case Text:
-                processText(vnode, container)
+                processText(n1, n2, container)
                 break
             default:
                 if (shapeFlag & ShapeFlags.ELEMENT) {
                     // 判断 是不是 element
-                    processElement(vnode, container, parent)
+                    processElement(n1, n2, container, parent)
                 } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
                     // 判断 是不是 component
-                    processComponent(vnode, container, parent)
+                    processComponent(n1, n2, container, parent)
                 }
                 break
         }
@@ -40,24 +43,32 @@ export function createRenderer(options) {
 
     // 处理文本
     // 当 type 为 Text 时，创建 textnode 挂载到当前容器上
-    function processText(vnode: any, container: any) {
-        const { children } = vnode
-        const textNode = vnode.el = document.createTextNode(children)
+    function processText(n1: any, n2: any, container: any) {
+        const { children } = n2
+        const textNode = n2.el = document.createTextNode(children)
         container.append(textNode)
     }
 
     // 处理 Fragment （插槽）
     // 当 type 为 Fragment 时，只渲染 children
-    function processFragment(vnode: any, container: any, parent: any) {
-        mountChildren(vnode.children, container, parent)
+    function processFragment(n1: any, n2: any, container: any, parent: any) {
+        mountChildren(n2.children, container, parent)
     }
 
     // 处理标签元素 element
-    function processElement(vnode: any, container: any, parent: any) {
-        // 挂载（初始化）
-        mountElement(vnode, container, parent)
-        // TODO
-        // 更新（update）
+    function processElement(n1: any, n2: any, container: any, parent: any) {
+        if (!n1) {
+            // 挂载（初始化）
+            mountElement(n2, container, parent)
+        } else {
+            // 更新（update）
+            updateElement(n1, n2, container)
+        }
+    }
+
+    function updateElement(n1: any, n2: any, container: any) {
+        console.log('n1', n1)
+        console.log('n2', n2)
     }
 
     // 挂载 element
@@ -95,12 +106,12 @@ export function createRenderer(options) {
 
     function mountChildren(children: any[], container: any, parent: any) {
         children.forEach(v => {
-            patch(v, container, parent)
+            patch(null, v, container, parent)
         })
     }
 
-    function processComponent(vnode: any, container: any, parent: any) {
-        mountComponent(vnode, container, parent)
+    function processComponent(n1: any, n2: any, container: any, parent: any) {
+        mountComponent(n2, container, parent)
     }
 
     function mountComponent(vnode: any, container: any, parent: any) {
@@ -112,18 +123,37 @@ export function createRenderer(options) {
     }
 
     function setupRenderEffect(instance: any, vnode: any, container: any) {
-        const { proxy } = instance
-        // 使得在 render 函数中调用 this 能够获取到 setup 返回的值
-        // 并且能够使用 this.$el 等属性
-        const subTree = instance.render.call(proxy)
+        // 使用 effect 做响应式
+        effect(() => {
+            // 初始化
+            if (!instance.isMounted) {
+                const { proxy } = instance
+                // 使得在 render 函数中调用 this 能够获取到 setup 返回的值
+                // 并且能够使用 this.$el 等属性
+                const subTree = instance.subTree = instance.render.call(proxy)
 
-        // vnode -> patch
-        // vnode -> element -> mountElement
-        // subTree 的父组件就是当前组件实例 instance
-        patch(subTree, container, instance)
+                // vnode -> patch
+                // vnode -> element -> mountElement
+                // subTree 的父组件就是当前组件实例 instance
+                patch(null, subTree, container, instance)
 
-        // 整棵 vnode 树挂载完成之后，将 根元素 挂载到 el 上，可以通过 $el 获取到 根元素
-        vnode.el = subTree.el
+                // 整棵 vnode 树挂载完成之后，将 根元素 挂载到 el 上，可以通过 $el 获取到 根元素
+                vnode.el = subTree.el
+
+                instance.isMounted = true
+            } else {
+                // 更新
+                const { proxy } = instance
+                const subTree = instance.render.call(proxy)
+                const prevSubTree = instance.subTree
+                instance.subTree = subTree
+
+                patch(prevSubTree, subTree, container, instance)
+
+                vnode.el = subTree.el
+                instance.isMounted = true
+            }
+        })
     }
 
     // 因为 createApp 多套了一层函数，无法直接暴露给用户使用
