@@ -1,3 +1,4 @@
+import { EMPTY_OBJ } from './../shared/index';
 import { Fragment, Text } from './vnode';
 import { ShapeFlags } from "../shared/ShapeFlags"
 import { createComponentInstance, setupComponent } from "./component"
@@ -62,13 +63,43 @@ export function createRenderer(options) {
             mountElement(n2, container, parent)
         } else {
             // 更新（update）
-            updateElement(n1, n2, container)
+            patchElement(n1, n2, container)
         }
     }
 
-    function updateElement(n1: any, n2: any, container: any) {
-        console.log('n1', n1)
-        console.log('n2', n2)
+    function patchElement(n1: any, n2: any, container: any) {
+        const oldProps = n1.props || EMPTY_OBJ
+        const newProps = n2.props || EMPTY_OBJ
+
+        const el = n2.el = n1.el
+
+        patchProps(el, oldProps, newProps)
+    }
+
+    // 更新 props
+    function patchProps(el: any, oldProps: any, newProps: any) {
+        // 当旧的props不等于新的props时，才执行
+        if (oldProps !== newProps) {
+            for (const key in newProps) {
+                const prevProp = oldProps[key]
+                const nextProp = newProps[key]
+
+                // 新的值不等于旧的值，更新
+                if (prevProp !== nextProp) {
+                    patchProp(el, key, prevProp, nextProp)
+                }
+            }
+
+            // 当旧的 props 不为空时，才执行
+            if (oldProps !== EMPTY_OBJ) {
+                for (const key in oldProps) {
+                    // 旧的有，新的没有，删除
+                    if (!(key in newProps)) {
+                        patchProp(el, key, oldProps[key], null)
+                    }
+                }
+            }
+        }
     }
 
     // 挂载 element
@@ -96,7 +127,7 @@ export function createRenderer(options) {
             //     el.setAttribute(key, props[key])
             // }
             const val = props[key]
-            patchProp(el, key, val)
+            patchProp(el, key, null, val)
         }
 
         // insert

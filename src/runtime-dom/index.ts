@@ -4,15 +4,20 @@ function createElement(type) {
     return document.createElement(type)
 }
 
-function patchProp(el, key, val) {
+function patchProp(el, key, prevVal, newVal) {
     const isOn = (key: string) => /^on[A-Z]/.test(key)
     if (isOn(key)) {
         // 注册事件
         // 规则： on + Event
         const event = key.slice(2).toLowerCase()
-        el.addEventListener(event, val)
+        el.addEventListener(event, newVal)
     } else {
-        el.setAttribute(key, val)
+        // 如果新值为undefined或空，移除该属性
+        if (newVal === undefined || newVal === null) {
+            el.removeAttribute(key)
+        } else {
+            el.setAttribute(key, newVal)
+        }
     }
 }
 
