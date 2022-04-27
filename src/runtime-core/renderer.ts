@@ -10,7 +10,13 @@ import { effect } from '../reactivity/effect';
 // patchProp  处理prop
 // insert  插入元素
 export function createRenderer(options) {
-    const { createElement, patchProp, insert } = options
+    const { 
+        createElement, 
+        patchProp, 
+        insert, 
+        remove, 
+        setElementText 
+    } = options
 
     // 根组件没有parent，因此为 null
     function render(vnode, container) {
@@ -63,17 +69,46 @@ export function createRenderer(options) {
             mountElement(n2, container, parent)
         } else {
             // 更新（update）
-            patchElement(n1, n2, container)
+            patchElement(n1, n2, container, parent)
         }
     }
 
-    function patchElement(n1: any, n2: any, container: any) {
+    function patchElement(n1: any, n2: any, container: any, parent: any) {
         const oldProps = n1.props || EMPTY_OBJ
         const newProps = n2.props || EMPTY_OBJ
 
         const el = n2.el = n1.el
 
+        patchChildren(n1, n2, el, parent)
+
         patchProps(el, oldProps, newProps)
+    }
+
+    // 更新 children
+    function patchChildren(n1: any, n2: any, container: any, parent: any) {
+        const prevShapeFlag = n1.shapeFlag
+        const newShapeFlag  = n2.shapeFlag
+        const c1 = n1.children
+        const c2 = n2.children
+
+        // 如果新的 children 是 text 类型
+        // 如果旧的 children 是 array 类型，需要先移除旧 children 的挂载，再设置新的 text
+        // 如果旧的 children 是 text 类型，只有当新旧文本不一致时，才需要重新设置新的 text
+        if (newShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+            if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+                unmountChildren(n1.children)
+            }
+            if (c1 !== c2) {
+                setElementText(container, c2)
+            }
+        } else {
+            // 如果新的 children 是 array 类型
+            // 如果旧的 children 是 text 类型，需要先将旧的文本设置为 ''，然后再将新的 children 挂载到容器上
+            if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+                setElementText(container, '')
+                mountChildren(c2, container, parent)
+            }
+        }
     }
 
     // 更新 props
@@ -139,6 +174,14 @@ export function createRenderer(options) {
         children.forEach(v => {
             patch(null, v, container, parent)
         })
+    }
+
+    // 移除 children
+    function unmountChildren(children: any) {
+        for(let i = 0; i < children.length; i++) {
+            const el = children[i].el
+            remove(el)
+        }
     }
 
     function processComponent(n1: any, n2: any, container: any, parent: any) {

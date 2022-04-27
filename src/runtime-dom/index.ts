@@ -25,11 +25,24 @@ function insert(el, parent) {
     parent.append(el)
 }
 
+// 移除当前节点
+function remove(child) {
+    const parent = child.parentNode
+    parent && parent.removeChild(child)
+}
+
+// 设置文本节点
+function setElementText(el, text) {
+    el.textContent = text
+}
+
 // 渲染器
 const renderer: any = createRenderer({
     createElement,
     patchProp,
-    insert
+    insert,
+    remove,
+    setElementText
 })
 
 // 将 createApp 暴露给用户使用
