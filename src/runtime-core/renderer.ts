@@ -166,6 +166,55 @@ export function createRenderer(options) {
                 remove(c1[i].el)
                 i++
             }
+        } else {
+            // 中间对比
+            let s1 = i
+            let s2 = i
+
+            // 记录有差异的新节点数组的长度
+            const toBePatch = e2 - s2 + 1
+            // 记录已经比对过的节点数量
+            let patched = 0
+            // 建立新节点数组 key 的索引映射
+            const keyToNewIndexMap = new Map()
+            for(let i = s2; i <= e2; i++) {
+                const nextChild = c2[i]
+                keyToNewIndexMap.set(nextChild.key, i)
+            }
+
+            for (let i = s1; i <= e1; i++) {
+                const prevChild = c1[i]
+
+                // 如果比对的节点数量已经大于新节点数组的长度
+                // 则直接移除旧节点
+                if (patched >= toBePatch) {
+                    remove(prevChild.el)
+                    break
+                }
+
+                let newIndex
+                if (prevChild.key != undefined) {
+                    // 如果有 key 的话，直接比对 key
+                    newIndex = keyToNewIndexMap.get(prevChild.key)
+                } else {
+                    // 如果没有 key 的话，需要遍历比较
+                    for (let j = s2; j <= e2; j++) {
+                        if (isSameVNodeType(prevChild, c2[j])) {
+                            newIndex = j
+
+                            break
+                        }
+                    }
+                }
+
+                if (newIndex === undefined) {
+                    // 说明当前节点在新的节点中不存在 删除
+                    remove(prevChild.el)
+                } else {
+                    patch(prevChild, c2[newIndex], container, parent, null)
+                    patched++
+                }
+            }
         }
     }
 
