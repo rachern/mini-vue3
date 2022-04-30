@@ -21,8 +21,10 @@ function patchProp(el, key, prevVal, newVal) {
     }
 }
 
-function insert(el, parent) {
-    parent.append(el)
+function insert(el, parent, anchor = null) {
+    // parent.append(el)
+    // 将新元素插入到 anchor 之前，如果 anchor 是 null，则插入到末尾
+    parent.insertBefore(el, anchor)
 }
 
 // 移除当前节点

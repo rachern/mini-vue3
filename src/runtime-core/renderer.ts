@@ -20,18 +20,18 @@ export function createRenderer(options) {
 
     // 根组件没有parent，因此为 null
     function render(vnode, container) {
-        patch(null, vnode, container, null)
+        patch(null, vnode, container, null, null)
     }
 
     // n1: oldVNode
     // n2: newVNode
-    function patch(n1: any, n2: any, container: any, parent: any) {
+    function patch(n1: any, n2: any, container: any, parent: any, anchor) {
         // 处理组件
         const { type, shapeFlag } = n2
 
         switch(type) {
             case Fragment:
-                processFragment(n1, n2, container, parent)
+                processFragment(n1, n2, container, parent, anchor)
                 break
             case Text:
                 processText(n1, n2, container)
@@ -39,10 +39,10 @@ export function createRenderer(options) {
             default:
                 if (shapeFlag & ShapeFlags.ELEMENT) {
                     // 判断 是不是 element
-                    processElement(n1, n2, container, parent)
+                    processElement(n1, n2, container, parent, anchor)
                 } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
                     // 判断 是不是 component
-                    processComponent(n1, n2, container, parent)
+                    processComponent(n1, n2, container, parent, anchor)
                 }
                 break
         }
@@ -58,34 +58,34 @@ export function createRenderer(options) {
 
     // 处理 Fragment （插槽）
     // 当 type 为 Fragment 时，只渲染 children
-    function processFragment(n1: any, n2: any, container: any, parent: any) {
-        mountChildren(n2.children, container, parent)
+    function processFragment(n1: any, n2: any, container: any, parent: any, anchor: any) {
+        mountChildren(n2.children, container, parent, anchor)
     }
 
     // 处理标签元素 element
-    function processElement(n1: any, n2: any, container: any, parent: any) {
+    function processElement(n1: any, n2: any, container: any, parent: any, anchor: any) {
         if (!n1) {
             // 挂载（初始化）
-            mountElement(n2, container, parent)
+            mountElement(n2, container, parent, anchor)
         } else {
             // 更新（update）
-            patchElement(n1, n2, container, parent)
+            patchElement(n1, n2, container, parent, anchor)
         }
     }
 
-    function patchElement(n1: any, n2: any, container: any, parent: any) {
+    function patchElement(n1: any, n2: any, container: any, parent: any, anchor: any) {
         const oldProps = n1.props || EMPTY_OBJ
         const newProps = n2.props || EMPTY_OBJ
 
         const el = n2.el = n1.el
 
-        patchChildren(n1, n2, el, parent)
+        patchChildren(n1, n2, el, parent, anchor)
 
         patchProps(el, oldProps, newProps)
     }
 
     // 更新 children
-    function patchChildren(n1: any, n2: any, container: any, parent: any) {
+    function patchChildren(n1: any, n2: any, container: any, parent: any, anchor: any) {
         const prevShapeFlag = n1.shapeFlag
         const newShapeFlag  = n2.shapeFlag
         const c1 = n1.children
@@ -106,7 +106,65 @@ export function createRenderer(options) {
             // 如果旧的 children 是 text 类型，需要先将旧的文本设置为 ''，然后再将新的 children 挂载到容器上
             if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
                 setElementText(container, '')
-                mountChildren(c2, container, parent)
+                mountChildren(c2, container, parent, anchor)
+            } else {
+                // 如果旧的 children 是 array 类型，比较前后两个 array
+                patchKeyedChildren(c1, c2, container, parent, anchor)
+            }
+        }
+    }
+
+    function patchKeyedChildren(c1: any, c2: any, container: any, parent: any, anchor: any) {
+        const l2 = c2.length
+        let i = 0
+        let e1 = c1.length - 1
+        let e2 = l2 - 1
+
+        // 判断节点是否相同，根据 type + key
+        function isSameVNodeType(n1, n2) {
+            return n1.type === n2.type && n1.key === n2.key
+        }
+
+        // 从前往后找到第一个不相等的位置索引
+        while (i <= e1 && i <= e2) {
+            const n1 = c1[i]
+            const n2 = c2[i]
+            if (isSameVNodeType(n1, n2)) {
+                patch(n1, n2, container, parent, anchor)
+            } else {
+                break
+            }
+            i++
+        }
+
+        // 从后往前找到第一个不相等的位置索引
+        while (i <= e1 && i <= e2) {
+            const n1 = c1[e1]
+            const n2 = c2[e2]
+            if (isSameVNodeType(n1, n2)) {
+                patch(n1, n2, container, parent, anchor)
+            } else {
+                break
+            }
+            e1--
+            e2--
+        }
+
+        // 新的比老的多 创建
+        if (i > e1) {
+            if (i <= e2) {
+                const nextPos = e2 + 1
+                const anchor = nextPos < l2 ? c2[nextPos].el : null
+                while (i <= e2) {
+                    patch(null, c2[i], container, parent, anchor)
+                    i++
+                }
+            }
+        } else if (i > e2) {
+            // 老的比新的多 删除
+            while (i <= e1) {
+                remove(c1[i].el)
+                i++
             }
         }
     }
@@ -138,7 +196,7 @@ export function createRenderer(options) {
     }
 
     // 挂载 element
-    function mountElement(vnode: any, container: any, parent: any) {
+    function mountElement(vnode: any, container: any, parent: any, anchor: any) {
         const el = vnode.el = createElement(vnode.type)
 
         const { props, children } = vnode
@@ -147,7 +205,7 @@ export function createRenderer(options) {
             el.textContent = children
         } else if (vnode.shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
             // vnode
-            mountChildren(children, el, parent)
+            mountChildren(children, el, parent, anchor)
         }
 
         // props
@@ -167,12 +225,12 @@ export function createRenderer(options) {
 
         // insert
         // container.append(el)
-        insert(el, container)
+        insert(el, container, anchor)
     }
 
-    function mountChildren(children: any[], container: any, parent: any) {
+    function mountChildren(children: any[], container: any, parent: any, anchor) {
         children.forEach(v => {
-            patch(null, v, container, parent)
+            patch(null, v, container, parent, anchor)
         })
     }
 
@@ -184,19 +242,19 @@ export function createRenderer(options) {
         }
     }
 
-    function processComponent(n1: any, n2: any, container: any, parent: any) {
-        mountComponent(n2, container, parent)
+    function processComponent(n1: any, n2: any, container: any, parent: any, anchor: any) {
+        mountComponent(n2, container, parent, anchor)
     }
 
-    function mountComponent(vnode: any, container: any, parent: any) {
+    function mountComponent(vnode: any, container: any, parent: any, anchor: any) {
         const instance = createComponentInstance(vnode, parent)
 
         setupComponent(instance)
 
-        setupRenderEffect(instance, vnode, container)
+        setupRenderEffect(instance, vnode, container, anchor)
     }
 
-    function setupRenderEffect(instance: any, vnode: any, container: any) {
+    function setupRenderEffect(instance: any, vnode: any, container: any, anchor: any) {
         // 使用 effect 做响应式
         effect(() => {
             // 初始化
@@ -209,7 +267,7 @@ export function createRenderer(options) {
                 // vnode -> patch
                 // vnode -> element -> mountElement
                 // subTree 的父组件就是当前组件实例 instance
-                patch(null, subTree, container, instance)
+                patch(null, subTree, container, instance, anchor)
 
                 // 整棵 vnode 树挂载完成之后，将 根元素 挂载到 el 上，可以通过 $el 获取到 根元素
                 vnode.el = subTree.el
@@ -222,7 +280,7 @@ export function createRenderer(options) {
                 const prevSubTree = instance.subTree
                 instance.subTree = subTree
 
-                patch(prevSubTree, subTree, container, instance)
+                patch(prevSubTree, subTree, container, instance, anchor)
 
                 vnode.el = subTree.el
                 instance.isMounted = true
