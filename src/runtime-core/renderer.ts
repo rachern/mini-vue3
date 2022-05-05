@@ -177,6 +177,13 @@ export function createRenderer(options) {
             let patched = 0
             // 建立新节点数组 key 的索引映射
             const keyToNewIndexMap = new Map()
+            // 建立新旧节点下标映射
+            const newIndexToOldIndexMap = new Array(toBePatch).fill(0)
+            // 标记是否需要移动节点
+            let moved = false
+            // 标记当前新节点的最大下标
+            let maxNewIndexSoFar = 0
+
             for(let i = s2; i <= e2; i++) {
                 const nextChild = c2[i]
                 keyToNewIndexMap.set(nextChild.key, i)
@@ -211,8 +218,47 @@ export function createRenderer(options) {
                     // 说明当前节点在新的节点中不存在 删除
                     remove(prevChild.el)
                 } else {
+                    if (newIndex >= maxNewIndexSoFar) {
+                        // 如果新节点下标大于等于之前的下标
+                        // 说明当前节点应该在前面的节点之后，不需要移动节点位置
+                        // 并更新最大下标
+                        maxNewIndexSoFar = newIndex
+                    } else {
+                        // 如果新节点下标小于之前的下标 
+                        // 说明当前节点是需要移动的
+                        moved = true
+                    }
+
+                    // 记录新旧节点的下标映射
+                    // 新节点的下标从 0 开始
+                    // 因为旧节点的下标有可能为 0，而这里定义 0 为新节点在旧节点中不存在，因此需要将旧节点的下标 +1
+                    newIndexToOldIndexMap[newIndex - s2] = i + 1
                     patch(prevChild, c2[newIndex], container, parent, null)
                     patched++
+                }
+            }
+
+            // 计算最长递增子序列（如果需要移动节点的话）
+            const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : []
+            // j 为最长递增子序列的下标
+            let j = increasingNewIndexSequence.length - 1
+
+            // 因为从头开始遍历节点的话，有可能下一个节点也是需要移动的节点，因此从后往前遍历
+            for (let i = toBePatch - 1; i >= 0 ; i--) {
+                const nextIndex = i + s2
+                const nextChild = c2[nextIndex]
+                const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : null
+
+                if (!newIndexToOldIndexMap[i]) {
+                    // 如果新节点在旧节点中不存在，需要创建新节点
+                    patch(null, nextChild, container, parent, anchor)
+                } else if (moved) {
+                    // 否则，如果需要移动节点的话，走这里的逻辑
+                    if (j < 0 || i !== increasingNewIndexSequence[j]) {
+                        insert(nextChild.el, container , anchor)
+                    } else {
+                        j--
+                    }
                 }
             }
         }
@@ -342,4 +388,46 @@ export function createRenderer(options) {
     return {
         createApp: createAppAPI(render)
     }
+}
+
+// 计算最长递增子序列的算法
+function getSequence(arr) {
+    const p = arr.slice()
+    const result = [0]
+    let i, j, u, v, c
+    const len = arr.length
+    for (let i = 0; i < len; i++) {
+        const arrI = arr[i]
+        if (arrI !== 0) {
+            j = result[result.length - 1]
+            if (arr[j] < arrI) {
+                p[i] = j
+                result.push(i)
+                continue
+            }
+            u = 0
+            v = result.length - 1
+            while (u < v) {
+                c = (u + v) >> 1
+                if (arr[result[c]] < arrI) {
+                    u = c + 1
+                } else {
+                    v = c
+                }
+            }
+            if (arrI < arr[result[u]]) {
+                if (u > 0) {
+                    p[i] = result[u - 1]
+                }
+                result[u] = i
+            }
+        }
+    }
+    u = result.length
+    v = result[u - 1]
+    while (u-- > 0) {
+        result[u] = v
+        v = p[v]
+    }
+    return result
 }
