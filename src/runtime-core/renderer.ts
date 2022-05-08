@@ -5,6 +5,7 @@ import { createComponentInstance, setupComponent } from "./component"
 import { createAppAPI } from './createApp';
 import { effect } from '../reactivity/effect';
 import { shouldUpdateComponent } from './componentUpdateUtils';
+import { queueJobs } from './scheduler';
 
 // 自定义渲染器
 // createElement  创建元素
@@ -75,6 +76,10 @@ export function createRenderer(options) {
     }
 
     function patchElement(n1: any, n2: any, container: any, parent: any, anchor: any) {
+        console.log('patchElement')
+        console.log('n1', n1)
+        console.log('n2', n2)
+
         const oldProps = n1.props || EMPTY_OBJ
         const newProps = n2.props || EMPTY_OBJ
 
@@ -409,6 +414,12 @@ export function createRenderer(options) {
 
                 vnode.el = subTree.el
                 instance.isMounted = true
+            }
+        }, {
+            // 当依赖值发生变化时，不立即触发更新逻辑，而是将执行更新逻辑的函数收集起来，在微任务中进行更新，避免频繁更新
+            scheduler() {
+                console.log('updateScheduler')
+                queueJobs(instance.update)
             }
         })
     }
