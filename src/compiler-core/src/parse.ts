@@ -24,11 +24,26 @@ function parseChildren(context) {
             // 如果是以 '< + 字母' 开始，则按照标签解析
             node = parseElement(context)
         }
+    } else {
+        // 解析文本
+        node = parseText(context)
     }
     
     nodes.push(node)
 
     return nodes
+}
+
+function parseText(context) {
+    // 直接获取文本内容
+    const content = context.source.slice(0, context.source.length)
+    // 推进已经获取的文本内容长度
+    advanceBy(context, context.source.length)
+
+    return {
+        type: NodeTypes.TEXT,
+        content
+    }
 }
 
 function parseElement(context) {
