@@ -1,11 +1,18 @@
 import { NodeTypes } from "./ast"
 
-export function transform(root: any, options: any) {
+export function transform(root: any, options: any = {}) {
     // 创建全局上下文对象
     const context = createTransformContext(root, options)
 
     // 深度优先，递归遍历
     traverseNode(root, context)
+
+    // 获取根节点
+    createRootCodegen(root)
+}
+
+function createRootCodegen(root) {
+    root.codegenNode = root.children[0]
 }
 
 function createTransformContext(root: any, options: any) {
