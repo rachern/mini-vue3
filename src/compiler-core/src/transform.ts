@@ -1,3 +1,4 @@
+import { TO_DISPLAY_STRING } from './runtimeHelpers';
 import { NodeTypes } from "./ast"
 
 export function transform(root: any, options: any = {}) {
@@ -9,6 +10,8 @@ export function transform(root: any, options: any = {}) {
 
     // 获取根节点
     createRootCodegen(root)
+
+    root.helpers = [...context.helpers.keys()]
 }
 
 function createRootCodegen(root) {
@@ -18,7 +21,11 @@ function createRootCodegen(root) {
 function createTransformContext(root: any, options: any) {
     const context = {
         root,
-        nodeTransforms: options.nodeTransforms || []
+        nodeTransforms: options.nodeTransforms || [],
+        helpers: new Map(),
+        helper(key) {
+            context.helpers.set(key, 1)
+        }
     }
 
     return context
@@ -32,8 +39,20 @@ function traverseNode(node: any, context: any) {
         transform(node)
     }
 
-    // 递归执行其子节点
-    traverseChildren(node, context)
+    switch(node.type) {
+        case NodeTypes.INTERPOLATION:
+            context.helper(TO_DISPLAY_STRING)
+            break
+
+        case NodeTypes.ROOT:
+        case NodeTypes.ELEMENT:
+            // 递归执行其子节点
+            traverseChildren(node, context)
+            break
+
+        default:
+            break
+    }
 }
 
 function traverseChildren(node: any, context: any) {
