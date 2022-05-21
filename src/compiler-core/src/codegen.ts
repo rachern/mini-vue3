@@ -105,7 +105,6 @@ function genElement(node: any, context: any) {
 
     push(`${helper(CREATE_ELEMENT_VNODE)}(`)
     genNodeList(genNullable([tag, props, children]), context)
-    // genNode(children, context)
     push(')')
 }
 

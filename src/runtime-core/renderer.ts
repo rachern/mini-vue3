@@ -385,7 +385,7 @@ export function createRenderer(options) {
                 const { proxy } = instance
                 // 使得在 render 函数中调用 this 能够获取到 setup 返回的值
                 // 并且能够使用 this.$el 等属性
-                const subTree = instance.subTree = instance.render.call(proxy)
+                const subTree = instance.subTree = instance.render.call(proxy, proxy)
 
                 // vnode -> patch
                 // vnode -> element -> mountElement
@@ -406,7 +406,7 @@ export function createRenderer(options) {
                 }
 
                 const { proxy } = instance
-                const subTree = instance.render.call(proxy)
+                const subTree = instance.render.call(proxy, proxy)
                 const prevSubTree = instance.subTree
                 instance.subTree = subTree
 
